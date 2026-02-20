@@ -107,7 +107,7 @@ bot.onText(/\/remove (\d+)/, (msg, match) => {
   const index = parseInt(match[1]) - 1;
 
   const lembretes = lerLembretes();
-  const meus = lembretes.filter(l => l.chatId === chatId);
+  const meus = lembretes.filter(l => l.chatId === chatId).sort((a, b) => a.dia - b.dia);
 
   if (!meus[index]) {
     return bot.sendMessage(chatId, "❌ Lembrete inválido.");
