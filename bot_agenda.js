@@ -15,6 +15,14 @@ const app = express();
 
 app.use(express.json());
 
+const commands = [
+  "/start - Iniciar",
+  "/comandos - Ver comandos",
+  "/list - Listar lembretes",
+  "/add - Adicionar lembrete (Formato: comando dia mensagem)",
+  "/remove - Remover lembrete (Formato: comando index)",
+]
+
 /* =========================
    FUNÇÕES DE ARQUIVO
 ========================= */
@@ -46,6 +54,15 @@ bot.setWebHook(`${url}/bot${token}`);
 // /start
 bot.onText(/\/start/, (msg) => {
   bot.sendMessage(msg.chat.id, "📅 Bem-vinda à sua Agenda Mensal!");
+});
+
+bot.onText(/\/comandos/, (msg) => {
+  bot.sendMessage(msg.chat.id, `
+Comandos disponíveis:
+${commands.join("\n")}
+\n\nSite usado para rodar o bot: https://dashboard.render.com/\n
+Site usado para fazer o get no serviço (a cada 1h) e impedir que ele durma: https://dashboard.uptimerobot.com/
+  `);
 });
 
 // /add DIA HORA MENSAGEM
@@ -124,8 +141,9 @@ function verificarLembretes() {
         bot.sendMessage(l.chatId, `🔔 Lembrete: ${l.mensagem}`);
         l.ultimoEnvio = dataHojeStr;
         alterado = true;
+      } else {
+        console.log(`Esse lembrete já foi enviado hoje`);
       }
-
     }
   });
 
