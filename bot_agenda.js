@@ -49,23 +49,22 @@ bot.onText(/\/start/, (msg) => {
 });
 
 // /add DIA HORA MENSAGEM
-bot.onText(/\/add (\d{1,2}) (\d{1,2}) (.+)/, (msg, match) => {
+bot.onText(/\/add (\d{1,2}) (.+)/, (msg, match) => {
   const chatId = msg.chat.id;
   const dia = parseInt(match[1]);
-  const hora = parseInt(match[2]);
-  const mensagem = match[3];
+  const mensagem = match[2];
 
-  if (dia < 1 || dia > 31 || hora < 0 || hora > 23) {
-    return bot.sendMessage(chatId, "❌ Dia ou hora inválidos.");
+  if (dia < 1 || dia > 31) {
+    return bot.sendMessage(chatId, "❌ Dia inválido.");
   }
 
   const lembretes = lerLembretes();
 
-  lembretes.push({ chatId, dia, hora, mensagem });
+  lembretes.push({ chatId, dia, mensagem });
 
   salvarLembretes(lembretes);
 
-  bot.sendMessage(chatId, `✅ Lembrete criado para dia ${dia} às ${hora}:00`);
+  bot.sendMessage(chatId, `✅ Lembrete criado para dia ${dia}!`);
 });
 
 // /list
@@ -79,7 +78,7 @@ bot.onText(/\/list/, (msg) => {
 
   let texto = "📅 Seus lembretes:\n\n";
   lembretes.forEach((l, i) => {
-    texto += `${i + 1}. Dia ${l.dia} às ${l.hora}:00 - ${l.mensagem}\n`;
+    texto += `${i + 1}. Dia ${l.dia} - ${l.mensagem}\n`;
   });
 
   bot.sendMessage(chatId, texto);
@@ -102,7 +101,6 @@ bot.onText(/\/remove (\d+)/, (msg, match) => {
   const novos = lembretes.filter(l =>
     !(l.chatId === chatId &&
       l.dia === remover.dia &&
-      l.hora === remover.hora &&
       l.mensagem === remover.mensagem)
   );
 
@@ -111,26 +109,31 @@ bot.onText(/\/remove (\d+)/, (msg, match) => {
   bot.sendMessage(chatId, "🗑 Lembrete removido.");
 });
 
-/* =========================
-   CRON - VERIFICA A CADA MINUTO
-========================= */
-
-cron.schedule('* * * * *', () => {
-  const agora = new Date();
-  const dia = agora.getDate();
-  const hora = agora.getHours();
-  const minuto = agora.getMinutes();
-
-  if (minuto !== 0) return;
+function verificarLembretes() {
+  const hoje = new Date();
+  const diaHoje = hoje.getDate();
+  const dataHojeStr = hoje.toISOString().split("T")[0]; // YYYY-MM-DD
 
   const lembretes = lerLembretes();
+  let alterado = false;
 
   lembretes.forEach(l => {
-    if (l.dia === dia && l.hora === hora) {
-      bot.sendMessage(l.chatId, `🔔 Lembrete: ${l.mensagem}`);
+    if (l.dia === diaHoje) {
+
+      if (l.ultimoEnvio !== dataHojeStr) {
+        bot.sendMessage(l.chatId, `🔔 Lembrete: ${l.mensagem}`);
+        l.ultimoEnvio = dataHojeStr;
+        alterado = true;
+      }
+
     }
   });
-});
+
+  if (alterado) {
+    salvarLembretes(lembretes);
+  }
+}
+
 
 /* =========================
    SERVER
@@ -139,7 +142,8 @@ cron.schedule('* * * * *', () => {
 const PORT = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.send("Bot está rodando 🚀");
+  verificarLembretes();
+  res.send("OK");
 });
 
 app.listen(PORT, () => {
