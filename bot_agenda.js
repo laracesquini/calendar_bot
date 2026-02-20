@@ -87,7 +87,7 @@ bot.onText(/\/add (\d{1,2}) (.+)/, (msg, match) => {
 // /list
 bot.onText(/\/list/, (msg) => {
   const chatId = msg.chat.id;
-  const lembretes = lerLembretes().filter(l => l.chatId === chatId);
+  const lembretes = lerLembretes().filter(l => l.chatId === chatId).sort((a, b) => a.dia - b.dia);
 
   if (!lembretes.length) {
     return bot.sendMessage(chatId, "Você não tem lembretes.");
